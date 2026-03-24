@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Este documento define los requisitos para un sistema de pruebas completo que verifique la funcionalidad del proyecto RAG (Retrieval-Augmented Generation) local. El sistema RAG utiliza LangChain, ChromaDB y LM Studio para proporcionar interfaces: CLI (`agent.py` / `agent_lmstudio.py`), API REST (`api_service.py` / `api_service_lmstudio.py`) y aplicación Streamlit principal **`app_lmstudio.py`** (sustituye o complementa el dashboard legado `app_dashboard.py`). El sistema de pruebas debe validar todos los componentes críticos, incluyendo ingesta de documentos (incl. **carpeta de oficina** vía `office_docs.py`), recuperación de información, **modos de contenido tipo NotebookLM** (`prompts_notebooklm.py`, `rag_modes_lm.py`), **memoria conversacional** en el chat, funcionamiento de interfaces, integración con LM Studio (incl. **ids de modelo** alineados con `GET /v1/models`) y manejo de errores.
+Este documento define los requisitos para un sistema de pruebas completo que verifique la funcionalidad del proyecto RAG (Retrieval-Augmented Generation) local. El sistema RAG utiliza LangChain, ChromaDB y LM Studio para proporcionar interfaces: CLI (`agent.py` / `agent_lmstudio.py`), API REST (`api_service.py` / `api_service_lmstudio.py`) y aplicación Streamlit principal **`app_lmstudio.py`** (sustituye o complementa el dashboard legado `app_dashboard.py`). El sistema de pruebas debe validar todos los componentes críticos, incluyendo ingesta de documentos (incl. **carpeta de oficina** vía `office_docs.py`), recuperación de información, **modos de contenido tipo NotebookLM** (`prompts_notebooklm.py`, `rag_modes_lm.py`), **cuestionario interactivo** y **filtrado por documentos**, **memoria conversacional** en el chat, funcionamiento de interfaces, integración con LM Studio (incl. **ids de modelo** alineados con `GET /v1/models`) y manejo de errores.
 
 ## Glossary
 
@@ -13,10 +13,11 @@ Este documento define los requisitos para un sistema de pruebas completo que ver
 - **CLI_Interface**: Interfaz de línea de comandos del agente (agent.py)
 - **API_Service**: Servicio REST API (api_service.py)
 - **Dashboard**: Interfaz web Streamlit legada (app_dashboard.py), si aplica
-- **App_Streamlit_LM**: Interfaz principal Streamlit con LM Studio (`app_lmstudio.py`): pestañas Chat / Resumen / Cuestionario / Guía, selector de modelo, indexación por carpeta y memoria conversacional
+- **App_Streamlit_LM**: Interfaz principal Streamlit con LM Studio (`app_lmstudio.py`): pestañas Chat / Resumen / Cuestionario / Guía, selector de modelo, multiselect de documentos indexados, indexación por carpeta, memoria conversacional, cuestionario interactivo (opciones y comprobación), guardar/imprimir salidas, panel LM Studio opcional (embed / escritorio)
 - **Office_Docs_Module**: Módulo de carga e indexación por carpeta (`office_docs.py`): PDF, TXT, Markdown, DOCX; indexación recursiva; vectorización con reemplazo total del índice o fusión incremental
 - **Prompting_NotebookLM**: Plantillas y modos de contenido (`prompts_notebooklm.py`)
 - **RAG_Modes_LM**: Ejecución de modos sobre Chroma + LM Studio (`rag_modes_lm.py`)
+- **Reindex_CLI**: Script de línea de comandos `reindex.py` que invoca `indexar_carpeta_en_sistema` en `office_docs.py` para reindexar tras sync a disco o desde cron (sin Streamlit ni LM Studio para la ingesta)
 - **ChromaDB**: Base de datos vectorial para almacenar embeddings
 - **LM_Studio**: Servidor local de modelos de lenguaje
 - **Agent_Tools**: Herramientas del agente (consultar_documentos, obtener_fecha_actual, buscar_palabra_clave_en_texto)
@@ -43,6 +44,8 @@ Este documento define los requisitos para un sistema de pruebas completo que ver
 9. WHEN the Office_Docs_Module loads a folder, THE Ingestion_Module SHALL accept PDF, TXT, MD/Markdown and DOCX (con dependencia `docx2txt` para DOCX), and SHALL support recursive directory walking
 10. WHEN App_Streamlit_LM saves uploaded files, THE files SHALL be persisted under `./docs/` (además de vectorizarse)
 11. WHEN a full-folder reindex is requested (docs/ or absolute path), THE vector store SHALL be rebuilt as single source of truth (replace index); WHEN incremental upload indexing is used, THE new chunks SHALL be merged into the existing Chroma index without requiring LM Studio for ingestion
+12. WHEN Reindex_CLI is run with `--path` pointing to a folder on disk (e.g. after cloud sync to a local mirror), THE Office_Docs_Module SHALL use the same indexing logic as the Streamlit “index folder” action; WHEN `--merge` is omitted, THE vector store SHALL be replaced; WHEN `--merge` is set, THE new chunks SHALL be merged into the existing Chroma index
+13. WHEN operators document cloud-as-source-of-truth workflows, THE documentation SHALL describe sync-to-disk plus periodic or manual `reindex.py` execution (including optional `rclone` and `cron` examples)
 
 ### Requirement 2: Pruebas de Recuperación RAG
 
@@ -180,6 +183,11 @@ Este documento define los requisitos para un sistema de pruebas completo que ver
 3. WHEN indexing from `./docs` or an absolute path, THE App_Streamlit_LM SHALL invoke Office_Docs_Module with `reemplazar_indice=True` for full-folder single-source behaviour
 4. WHEN uploading files, THE App_Streamlit_LM SHALL persist copies under `./docs/` and call `vectorizar_y_persistir(..., reemplazar_indice=False)` to merge chunks
 5. THE Test_Suite SHALL cover tabbed areas: Chat, Resumen, Cuestionario, Guía de estudio at minimum at integration or smoke level where feasible
+6. WHEN the user selects one or more indexed source files in the sidebar multiselect, THE App_Streamlit_LM SHALL restrict retrieval/filtering so that generated content (resumen, cuestionario, guía) uses only chunks from those sources where the implementation applies metadata filtering
+7. WHEN Cuestionario JSON is successfully parsed, THE App_Streamlit_LM SHALL render **interactive** questions (radio A–D, **Comprobar**, feedback correcto/incorrecto, explicación) and SHALL expose traceability fields (`fuente_archivo`, `numero_fragmento`, `donde_encontrarlo`) with resolvable file links where paths are known
+8. WHEN Resumen, Cuestionario or Guía outputs are generated, THE App_Streamlit_LM SHALL keep the latest structured result in session state and SHALL offer **Guardar** (download JSON/text) and **Imprimir** (browser print) actions consistent with the UI implementation
+9. WHEN `LM_STUDIO_EMBED_URL` is set, THE App_Streamlit_LM MAY show an optional web embed in the LM Studio expander; WHEN `LM_STUDIO_EXECUTABLE` is set, THE UI MAY offer opening the LM Studio desktop app from the sidebar
+10. WHEN LM Studio returns an error indicating no loaded model (or equivalent), THE App_Streamlit_LM SHALL surface a clear, user-facing message instead of a raw stack trace
 
 ### Requirement 12: Pruebas de modos de contenido y memoria conversacional
 
@@ -190,7 +198,8 @@ Este documento define los requisitos para un sistema de pruebas completo que ver
 1. WHEN ModoContenido.CHAT runs with non-empty `historial_conversacion`, THE RAG_Modes_LM SHALL use `PROMPT_CHAT_MEMORIA` and SHALL combine retrieval query with recent history for follow-up questions
 2. WHEN Resumen, Cuestionario or Guía modes run, THE RAG_Modes_LM SHALL use distinct prompts and retrieval breadth (`k` / temperature) per `configuracion_modo`
 3. WHEN Cuestionario mode returns JSON, THE App_Streamlit_LM SHALL attempt to parse and render structured questions; WHEN JSON is invalid, THE UI SHALL fall back to raw model text
-4. THE Test_Suite SHALL verify that facts in generated answers remain conditioned on retrieved context (no fabricated citations from empty index) where testable with mocks
+4. WHEN Cuestionario retrieval builds context, THE RAG_Modes_LM SHALL annotate each chunk with its source file path (or equivalent metadata) so the model can populate `fuente_archivo`, `numero_fragmento`, and related traceability fields in the JSON schema from `prompts_notebooklm.py`
+5. THE Test_Suite SHALL verify that facts in generated answers remain conditioned on retrieved context (no fabricated citations from empty index) where testable with mocks
 
 ### Requirement 13: Contrato LM Studio (modelo e identificadores)
 

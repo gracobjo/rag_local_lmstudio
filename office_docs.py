@@ -6,14 +6,18 @@ Formatos: PDF, TXT, Markdown, DOCX (opcional). Recorre subcarpetas si se indica.
 from __future__ import annotations
 
 import os
-import shutil
 from typing import Callable, List, Optional
 
 from langchain_core.documents import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+from chroma_lm import (
+    borrar_directorio_indice,
+    chroma_from_documents,
+    huggingface_embeddings,
+    langchain_chroma,
+)
+from rag_chain_lm import DB_PATH
 
 # Extensiones tratadas como documentación (no binarios genéricos)
 EXTENSIONES_SOPORTADAS = {".pdf", ".txt", ".md", ".markdown", ".docx"}
@@ -65,6 +69,14 @@ def listar_archivos_documento(
     return salida
 
 
+def normalizar_fuente_metadata(documentos: List[Document]) -> None:
+    """Unifica la metadata `source` a ruta absoluta (evita /tmp/... en fuentes)."""
+    for d in documentos:
+        src = d.metadata.get("source")
+        if src:
+            d.metadata["source"] = os.path.abspath(os.path.expanduser(str(src)))
+
+
 def cargar_carpeta(
     carpeta: str,
     recursivo: bool = True,
@@ -105,27 +117,51 @@ def vectorizar_y_persistir(
     """
     if not documentos:
         return 0
-    if reemplazar_indice and os.path.exists(persist_directory):
-        shutil.rmtree(persist_directory)
+    if reemplazar_indice:
+        borrar_directorio_indice(persist_directory)
 
+    normalizar_fuente_metadata(documentos)
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size, chunk_overlap=chunk_overlap
     )
     chunks = splitter.split_documents(documentos)
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
+    embeddings = huggingface_embeddings()
 
     if not os.path.exists(persist_directory):
-        Chroma.from_documents(
-            documents=chunks,
-            embedding=embeddings,
-            persist_directory=persist_directory,
-        )
+        chroma_from_documents(chunks, persist_directory, embeddings)
     else:
-        store = Chroma(
-            persist_directory=persist_directory,
-            embedding_function=embeddings,
-        )
+        store = langchain_chroma(persist_directory, embeddings)
         store.add_documents(chunks)
     return len(chunks)
+
+
+def indexar_carpeta_en_sistema(
+    ruta_carpeta: str,
+    recursivo: bool = True,
+    reemplazar: bool = True,
+    persist_directory: Optional[str] = None,
+) -> tuple[int, int]:
+    """
+    Carga todos los documentos admitidos desde una carpeta y vectoriza.
+
+    Usado por la UI Streamlit y por ``reindex.py`` (cron / sincronización a disco).
+
+    Devuelve (número de fragmentos, número de archivos de origen distintos).
+    """
+    ruta = os.path.realpath(os.path.expanduser(ruta_carpeta.strip()))
+    if not os.path.isdir(ruta):
+        raise FileNotFoundError(f"No es una carpeta válida: {ruta}")
+    docs = cargar_carpeta(ruta, recursivo=recursivo)
+    fuentes: set[str] = set()
+    for d in docs:
+        s = d.metadata.get("source")
+        if s and not d.metadata.get("error"):
+            fuentes.add(s)
+    n_archivos = len(fuentes)
+    pdir = persist_directory if persist_directory is not None else DB_PATH
+    chunks = vectorizar_y_persistir(
+        docs,
+        persist_directory=pdir,
+        reemplazar_indice=reemplazar,
+    )
+    return chunks, n_archivos

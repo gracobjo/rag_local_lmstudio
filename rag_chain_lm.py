@@ -7,8 +7,7 @@ from __future__ import annotations
 from typing import Optional
 
 from langchain_openai import ChatOpenAI
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from chroma_lm import huggingface_embeddings, langchain_chroma
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 import os
@@ -40,13 +39,8 @@ def crear_cadena_rag(model_id: Optional[str] = None):
     model_id: id exacto según GET /v1/models. Si es None, usa LM_STUDIO_MODEL (env o default).
     """
     mid = (model_id or LM_STUDIO_MODEL).strip()
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
-    db = Chroma(
-        persist_directory=DB_PATH,
-        embedding_function=embeddings
-    )
+    embeddings = huggingface_embeddings()
+    db = langchain_chroma(DB_PATH, embeddings)
     retriever = db.as_retriever(search_kwargs={"k": 4})
     llm = ChatOpenAI(
         base_url=LM_STUDIO_URL,

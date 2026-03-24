@@ -6,6 +6,22 @@ Este plan descompone la implementación del sistema de pruebas RAG en tareas eje
 
 ## Tasks
 
+- [x] 0. Ingesta programada y documentación operativa (producto)
+  - [x] 0.1 Centralizar `indexar_carpeta_en_sistema` en `office_docs.py` y reutilizarla desde `app_lmstudio.py`
+  - [x] 0.2 Añadir `reindex.py` (CLI: `--path`, `--merge`, `--db`, `--no-recursive`) y `run_reindex.sh`
+  - [x] 0.3 Documentar estructura de repo, módulos `.py`, flujo nube→disco→reindex en `docs/MANUAL_DESARROLLO.md`; ejemplo `docs/examples/reindex_cron_rclone.example.sh`
+  - [x] 0.4 Actualizar diagramas en `docs/DIAGRAMAS_UML_MERMAID.md` (componentes + ingesta programada)
+  - _Requirements: 1.11–1.13_
+
+- [x] 0.5 Cuestionario interactivo, trazabilidad y UX LM Studio (producto)
+  - [x] 0.5.1 Esquema JSON ampliado en `prompts_notebooklm.py` (`fuente_archivo`, `numero_fragmento`, `donde_encontrarlo`, etc.)
+  - [x] 0.5.2 Contexto de recuperación en modo CUESTIONARIO con `(archivo: ruta)` por fragmento en `rag_modes_lm.py`
+  - [x] 0.5.3 UI `_render_cuestionario_interactivo` en `app_lmstudio.py` (A–D, Comprobar, feedback, enlaces `file://` cuando aplica)
+  - [x] 0.5.4 Multiselect de fuentes indexadas; persistencia de último resumen/cuestionario/guía; `_render_guardar_imprimir`
+  - [x] 0.5.5 Panel LM Studio: `LM_STUDIO_EMBED_URL`, `LM_STUDIO_EMBED_HEIGHT`, `LM_STUDIO_EXECUTABLE`; mensajes amigables si el modelo no está cargado
+  - [x] 0.5.6 `chroma_lm.py` con `PersistentClient`; documentación de diagramas alineada con flujos actuales
+  - _Requirements: 11.6–11.10, 12.4_
+
 - [ ] 1. Configurar infraestructura de testing
   - [ ] 1.1 Crear estructura de directorios y archivos base
     - Crear directorio `tests/` con subdirectorios `fixtures/`, `mocks/`, `utils/`

@@ -118,7 +118,10 @@ Esquema obligatorio:
       "pregunta": "texto de la pregunta",
       "opciones": ["opción A", "opción B", "opción C", "opción D"],
       "indice_correcta": 0,
-      "explicacion": "por qué es correcta según el contexto"
+      "explicacion": "por qué la opción correcta se deduce del contexto",
+      "numero_fragmento": 1,
+      "fuente_archivo": "ruta ABSOLUTA exactamente igual que en (archivo: ...) del fragmento de donde sale la respuesta",
+      "donde_encontrarlo": "pista concreta: epígrafe, tabla, artículo, definición o idea del texto para buscar en ese PDF/documento"
     }}
   ]
 }}
@@ -126,8 +129,13 @@ Esquema obligatorio:
 Reglas:
 - Exactamente 4 opciones por pregunta.
 - indice_correcta es 0–3 según la opción correcta.
-- Si el contexto no permite preguntas suficientes, devuelve preguntas solo sobre lo que sí aparece y añade en "titulo" una nota breve de limitación.
-- No inventes hechos que no estén respaldados por el contexto."""
+- numero_fragmento: entero del encabezado [Fragmento N] que mejor respalda la pregunta.
+- fuente_archivo: copia literal de la ruta que aparece tras «archivo:» en ese fragmento (para enlaces locales en la app).
+- Si el contexto no permite preguntas suficientes, devuelve solo las posibles y añade en "titulo" una nota breve de limitación.
+- No inventes hechos que no estén respaldados por el contexto.
+
+Salida obligatoria: un único objeto JSON válido (UTF-8). No uses bloques markdown, no escribas ``` ni texto antes o después del JSON.
+No escribas introducción ni despedida: el primer carácter de tu respuesta debe ser «{{» y el último «}}»."""
 
 PROMPT_GUIA_ESTUDIO: Final[str] = """{app_context}
 
@@ -164,7 +172,7 @@ def configuracion_modo(modo: ModoContenido) -> PlantillaModo:
     if modo == ModoContenido.RESUMEN:
         return PlantillaModo(PROMPT_RESUMEN, temperatura=0.3, k_fragmentos=14)
     if modo == ModoContenido.CUESTIONARIO:
-        return PlantillaModo(PROMPT_CUESTIONARIO, temperatura=0.35, k_fragmentos=16)
+        return PlantillaModo(PROMPT_CUESTIONARIO, temperatura=0.1, k_fragmentos=16)
     if modo == ModoContenido.GUIA_ESTUDIO:
         return PlantillaModo(PROMPT_GUIA_ESTUDIO, temperatura=0.3, k_fragmentos=12)
     raise ValueError(modo)

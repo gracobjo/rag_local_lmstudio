@@ -2,7 +2,7 @@
 
 ## Overview
 
-Este documento describe el diseño técnico de un sistema de pruebas completo para validar un proyecto RAG (Retrieval-Augmented Generation) que utiliza LangChain, ChromaDB y LM Studio. El **producto bajo prueba** ha evolucionado: la interfaz principal es **`app_lmstudio.py`** (Streamlit con pestañas, indexación de carpeta de oficina, memoria conversacional y modos tipo NotebookLM), apoyada en **`office_docs.py`**, **`rag_chain_lm.py`**, **`prompts_notebooklm.py`** y **`rag_modes_lm.py`**. Siguen existiendo módulos legados (`app_dashboard.py`, `rag_chain.py`, `ingesta.py`) que pueden mantenerse en el alcance de pruebas si siguen en uso. El sistema de pruebas proporcionará cobertura de los componentes críticos mediante pruebas unitarias, de integración y basadas en propiedades.
+Este documento describe el diseño técnico de un sistema de pruebas completo para validar un proyecto RAG (Retrieval-Augmented Generation) que utiliza LangChain, ChromaDB y LM Studio. El **producto bajo prueba** ha evolucionado: la interfaz principal es **`app_lmstudio.py`** (Streamlit con pestañas, indexación de carpeta de oficina, memoria conversacional, modos tipo NotebookLM, **cuestionario interactivo** con opciones A–D y comprobación de respuestas, **persistencia en `st.session_state`** de último resumen/cuestionario/guía con acciones **Guardar** e **Imprimir**, **multiselect de documentos indexados** para acotar el contexto RAG, y panel lateral LM Studio con **embed opcional** vía `LM_STUDIO_EMBED_URL` y arranque del escritorio con **`LM_STUDIO_EXECUTABLE`**). Está apoyada en **`office_docs.py`** (incluye **`indexar_carpeta_en_sistema`** compartido con la CLI), **`chroma_lm.py`** (`PersistentClient` sobre `./chroma_db`), **`rag_chain_lm.py`**, **`prompts_notebooklm.py`** y **`rag_modes_lm.py`** (en modo cuestionario, el contexto de recuperación incluye **ruta de archivo por fragmento** para trazabilidad). La CLI **`reindex.py`** permite reindexar desde cron o tras sincronizar una carpeta de la nube a disco (sin Streamlit ni LM Studio). Siguen existiendo módulos legados (`app_dashboard.py`, `rag_chain.py`, `ingesta.py`) que pueden mantenerse en el alcance de pruebas si siguen en uso. El sistema de pruebas proporcionará cobertura de los componentes críticos mediante pruebas unitarias, de integración y basadas en propiedades.
 
 ### Objetivos del Diseño
 
@@ -15,9 +15,9 @@ Este documento describe el diseño técnico de un sistema de pruebas completo pa
 ### Alcance
 
 El sistema de pruebas cubrirá (prioridad actual):
-- **Carga e indexación de documentación de oficina** (`office_docs.py`): carpetas `./docs` o rutas absolutas, recursivo, formatos PDF/TXT/MD/DOCX, vectorización con reemplazo total o fusión incremental
+- **Carga e indexación de documentación de oficina** (`office_docs.py`): carpetas `./docs` o rutas absolutas, recursivo, formatos PDF/TXT/MD/DOCX, vectorización con reemplazo total o fusión incremental; **`reindex.py`** reutiliza `indexar_carpeta_en_sistema` para ingesta programada (cron, post-rclone)
 - **Cadena RAG LM Studio** (`rag_chain_lm.py`) y ejecución multimodo (`rag_modes_lm.py`, `prompts_notebooklm.py`)
-- **Interfaz Streamlit** (`app_lmstudio.py`): chat con memoria, resumen, cuestionario JSON, guía de estudio, selector de modelo, botones de indexación
+- **Interfaz Streamlit** (`app_lmstudio.py`): chat con memoria; resumen, cuestionario JSON **con UI interactiva** (opciones, comprobación, explicación y referencia a fragmento/fuente), guía de estudio; **filtrado por documentos**; selector de modelo; panel LM Studio (embed/escritorio); botones de indexación; **guardar/imprimir** salidas generadas
 - Módulo de ingesta clásico (`ingesta.py`) y cadena legada (`rag_chain.py`) si permanecen en el proyecto
 - Herramientas y agente (`agent.py` / `agent_lmstudio.py`)
 - API REST (`api_service.py` / `api_service_lmstudio.py`)
@@ -148,8 +148,9 @@ Para aislar componentes y acelerar las pruebas, utilizaremos mocks para:
 | `office_docs.py` | Listar archivos por extensión, cargar PDF/TXT/MD/DOCX, `vectorizar_y_persistir` con `reemplazar_indice` para índice único o fusión |
 | `rag_chain_lm.py` | `ChatOpenAI` contra `LM_STUDIO_BASE_URL`, modelo `LM_STUDIO_MODEL` (id real), Chroma `DB_PATH` |
 | `prompts_notebooklm.py` | `APP_CONTEXT_FOR_MODEL`, `ModoContenido`, plantillas chat / memoria / resumen / cuestionario / guía |
-| `rag_modes_lm.py` | `ejecutar_modo`: recuperación + prompt por modo; historial opcional para chat; parseo JSON de cuestionario |
-| `app_lmstudio.py` | Streamlit: sidebar modelo + documentos; pestañas; indexación `docs/` o ruta absoluta; subida con persistencia en `docs/` |
+| `rag_modes_lm.py` | `ejecutar_modo`: recuperación + prompt por modo; historial opcional para chat; en **CUESTIONARIO**, contexto con `(archivo: ruta)` por fragmento; parseo JSON de cuestionario |
+| `chroma_lm.py` | Cliente Chroma persistente (`PersistentClient`) y utilidades sobre `DB_PATH` |
+| `app_lmstudio.py` | Streamlit: sidebar modelo + multiselect de fuentes + LM Studio (embed `LM_STUDIO_EMBED_URL`); pestañas; indexación `docs/` o ruta absoluta; subida a `docs/`; `_render_cuestionario_interactivo`, `_render_guardar_imprimir`, mensajes si el modelo no está cargado |
 
 **Scripts de arranque:** `run_streamlit_lmstudio.sh`, `run_api_lmstudio.sh` (activan venv y exportan modelo por defecto).
 

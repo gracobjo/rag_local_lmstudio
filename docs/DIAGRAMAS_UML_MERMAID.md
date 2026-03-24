@@ -1,6 +1,8 @@
 # Diagramas UML (Mermaid) — RAG local con LM Studio
 
-Este documento recoge vistas **componentes**, **despliegue**, **secuencia**, **clases** y **estados** del sistema descrito en el código (`app_lmstudio.py`, `office_docs.py`, `rag_chain_lm.py`, `rag_modes_lm.py`, `prompts_notebooklm.py`).
+Este documento recoge vistas **componentes**, **despliegue**, **secuencia**, **clases** y **estados** del sistema descrito en el código (`app_lmstudio.py`, `office_docs.py`, `chroma_lm.py`, `rag_chain_lm.py`, `rag_modes_lm.py`, `prompts_notebooklm.py`, `reindex.py`). Incluye el flujo de **cuestionario interactivo** (JSON → opciones A–D → comprobación) y el **filtrado por documentos** en el sidebar.
+
+Para **uso de la aplicación**, véase el [manual de usuario](./MANUAL_USUARIO.md). Para **configuración del entorno**, LM Studio, servidor y arranque de Streamlit, el [manual de desarrollo](./MANUAL_DESARROLLO.md).
 
 ---
 
@@ -16,11 +18,16 @@ flowchart TB
         APP[app_lmstudio.py]
     end
 
+    subgraph CLI_reindex
+        RI[reindex.py]
+    end
+
     subgraph Lógica_RAG
         RC[rag_chain_lm.py]
         RM[rag_modes_lm.py]
         PR[prompts_notebooklm.py]
         OD[office_docs.py]
+        CL[chroma_lm.py]
     end
 
     subgraph Persistencia_local
@@ -37,7 +44,9 @@ flowchart TB
     end
 
     U --> APP
+    U -.->|opcional cron| RI
     APP --> OD
+    RI --> OD
     APP --> RM
     RM --> RC
     RM --> PR
@@ -47,7 +56,8 @@ flowchart TB
     RM --> CH
     RM --> ST
     RM --> LM
-    OD --> CH
+    OD --> CL
+    CL --> CH
     OD --> ST
     APP --> DOCS
 ```
@@ -79,6 +89,36 @@ flowchart LR
 
 ---
 
+## 2b. Ingesta programada (nube → disco → reindex)
+
+Flujo opcional cuando la **fuente de verdad** vive en la nube y se sincroniza a una carpeta local antes de vectorizar (sin LM Studio en la ingesta).
+
+```mermaid
+flowchart LR
+    subgraph Nube
+        CLD[Drive / S3 / etc.]
+    end
+
+    subgraph Sincronización
+        RC[rclone o cliente\nde sync]
+    end
+
+    subgraph Máquina_local
+        DOCS2[/docs o carpeta\nde mirror local/]
+        RIX[reindex.py]
+        CH2[(chroma_db)]
+        EM2[Embeddings locales]
+    end
+
+    CLD --> RC
+    RC --> DOCS2
+    DOCS2 --> RIX
+    RIX --> EM2
+    EM2 --> CH2
+```
+
+---
+
 ## 3. Diagrama de secuencia — Chat con memoria (RAG)
 
 ```mermaid
@@ -102,6 +142,35 @@ sequenceDiagram
     LM-->>RM: texto generado
     RM-->>ST: texto + fuentes
     ST-->>Usuario: Respuesta + expander fuentes
+```
+
+---
+
+## 3b. Diagrama de secuencia — Cuestionario (RAG + JSON + UI interactiva)
+
+Tras generar el JSON, la app **parsea** preguntas y muestra **radio A–D** y **Comprobar**; el contexto enviado al modelo en modo cuestionario incluye **ruta de archivo por fragmento** para trazabilidad (`fuente_archivo`, `numero_fragmento`, etc.).
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant ST as app_lmstudio
+    participant RM as rag_modes_lm
+    participant CH as ChromaDB
+    participant LM as LM Studio
+
+    Usuario->>ST: Pestaña Cuestionario + tema (y fuentes en multiselect)
+    ST->>RM: ejecutar_modo(CUESTIONARIO, instrucción, model_id)
+    RM->>CH: recuperación con filtro por fuentes si aplica
+    CH-->>RM: fragmentos + metadata (ruta origen)
+    RM->>RM: Construir contexto con (archivo: ruta) por fragmento
+    RM->>LM: POST /v1/chat/completions (JSON según prompts_notebooklm)
+    LM-->>RM: texto JSON
+    RM-->>ST: texto + fuentes
+    ST->>ST: parse JSON → lista de preguntas
+    loop Por cada pregunta
+        Usuario->>ST: Elige A–D y pulsa Comprobar
+        ST-->>Usuario: ✓/✗, opción correcta, explicación, enlace a fuente/fragmento
+    end
 ```
 
 ---
@@ -137,6 +206,9 @@ classDiagram
         +procesar_y_indexar(uploaded_files)
         +indexar_carpeta_en_sistema(ruta, recursivo, reemplazar)
         +_historial_para_prompt(messages)
+        +_render_cuestionario_interactivo(...)
+        +_render_guardar_imprimir(...)
+        +multiselect fuentes indexadas
     }
 
     class office_docs {
@@ -156,6 +228,7 @@ classDiagram
     class rag_modes_lm {
         +ejecutar_modo(modo, instruccion, model_id, historial)
         +_consulta_retrieval_chat()
+        +contexto cuestionario con ruta por fragmento
     }
 
     class prompts_notebooklm {
@@ -188,7 +261,9 @@ stateDiagram-v2
 
     Chat --> Chat: Nuevo mensaje (memoria opcional)
     Resumen --> ConIndice: Generar resumen
-    Cuestionario --> ConIndice: Generar test JSON
+    Cuestionario --> PreguntaActiva: Generar test JSON
+    PreguntaActiva --> PreguntaActiva: Elegir A–D y Comprobar
+    PreguntaActiva --> ConIndice: Otra pregunta / nuevo tema
     Guia --> ConIndice: Generar guía
 
     ConIndice --> SinIndice: Borrar índice
