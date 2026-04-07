@@ -2,7 +2,7 @@
 
 ## Overview
 
-Este plan descompone la implementación del sistema de pruebas RAG en tareas ejecutables. El sistema validará un proyecto RAG que utiliza LangChain, ChromaDB y LM Studio mediante pruebas unitarias, de integración y basadas en propiedades (property-based testing). **El producto actual expone sobre todo `app_lmstudio.py`, `office_docs.py`, `rag_chain_lm.py`, `rag_modes_lm.py` y `prompts_notebooklm.py`**; las pruebas deben ampliarse para cubrir estos módulos además de `ingesta.py`, `rag_chain.py`, `agent.py` y `api_service.py`. El objetivo es alcanzar 80% de cobertura de código con pytest y hypothesis.
+Este plan descompone la implementación del sistema de pruebas RAG en tareas ejecutables. El sistema validará un proyecto RAG que utiliza LangChain, ChromaDB y LM Studio mediante pruebas unitarias, de integración y basadas en propiedades (property-based testing). **El producto actual expone sobre todo `app_lmstudio.py`, `office_docs.py`, `rag_chain_lm.py`, `rag_modes_lm.py` y `prompts_notebooklm.py`**; las pruebas deben ampliarse para cubrir estos módulos además de `ingest.py`, `rag_chain.py`, `agent.py` y `api_service.py`. El objetivo es alcanzar 80% de cobertura de código con pytest y hypothesis.
 
 ## Tasks
 
@@ -31,7 +31,7 @@ Este plan descompone la implementación del sistema de pruebas RAG en tareas eje
 - [ ] 1. Configurar infraestructura de testing
   - [ ] 1.1 Crear estructura de directorios y archivos base
     - Crear directorio `tests/` con subdirectorios `fixtures/`, `mocks/`, `utils/`
-    - Crear archivos vacíos: `conftest.py`, `test_ingesta.py`, `test_rag_chain.py`, `test_rag_chain_lm.py`, `test_agent.py`, `test_api.py`, `test_dashboard.py`, `test_app_lmstudio.py`, `test_office_docs.py`, `test_rag_modes_lm.py`, `test_integration.py`, `test_properties.py`
+    - Crear archivos vacíos: `conftest.py`, `test_ingest.py`, `test_rag_chain.py`, `test_rag_chain_lm.py`, `test_agent.py`, `test_api.py`, `test_dashboard.py`, `test_app_lmstudio.py`, `test_office_docs.py`, `test_rag_modes_lm.py`, `test_integration.py`, `test_properties.py`
     - Crear `requirements-dev.txt` con dependencias de testing
     - _Requirements: 10.1, 10.2_
   
@@ -78,7 +78,7 @@ Este plan descompone la implementación del sistema de pruebas RAG en tareas eje
 
 - [ ] 4. Implementar pruebas del módulo de ingesta
   - [ ] 4.1 Escribir pruebas de carga de documentos
-    - Implementar `test_load_pdf_document` en `test_ingesta.py`
+    - Implementar `test_load_pdf_document` en `test_ingest.py`
     - Implementar `test_load_txt_document_utf8`
     - Implementar `test_unsupported_file_format`
     - Implementar `test_missing_docs_folder`

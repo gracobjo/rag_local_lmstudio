@@ -60,6 +60,19 @@ Abre la URL que muestre la consola (por defecto `http://localhost:8501`).
 
 ---
 
+## Flujo mínimo (enunciado práctica RAG)
+
+Orden alineado con el PDF *Práctica Final RAG / LangChain* (Apartados A–C):
+
+1. Coloca en **`./docs`** al menos **3 ficheros PDF o TXT** y un mínimo recomendado de **~10 páginas** en total (requisito del enunciado para la entrega).
+2. Activa el venv y ejecuta **`python ingest.py`** — construye o actualiza **`./chroma_db`** (Apartado A: carga + chunks + embeddings locales).
+3. Con LM Studio en marcha, ejecuta **`python agent.py`** — agente CLI con tools RAG + fecha + búsqueda por palabra (Apartado C). Opcional: `python agent_lmstudio.py` si usas la variante con `rag_chain_lm`.
+4. La interfaz completa Streamlit (`./run_streamlit_lmstudio.sh`) es **adicional** al mínimo del enunciado; para la práctica basta ingest + agent si así lo pide el profesor.
+
+La cadena RAG clásica está en **`rag_chain.py`** (Apartado B); la app principal usa **`rag_chain_lm.py`** con ids de modelo reales.
+
+---
+
 ## Documentación
 
 | Documento | Contenido |
@@ -79,6 +92,7 @@ Abre la URL que muestre la consola (por defecto `http://localhost:8501`).
 
 | Script | Uso |
 |--------|-----|
+| `ingest.py` | Indexa PDF/TXT de `./docs` en `./chroma_db` (Apartado A del enunciado). |
 | `run_streamlit_lmstudio.sh` | Lanza la app Streamlit principal. |
 | `reindex.py` | Reindexa una carpeta desde línea de órdenes (cron, post-sync). |
 | `run_reindex.sh` | Activa `venv` y delega en `reindex.py`. |

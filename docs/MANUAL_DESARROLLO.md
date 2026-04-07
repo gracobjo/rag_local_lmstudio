@@ -47,6 +47,7 @@ La aplicación **no** envía tus PDF a un LLM en la nube para generar embeddings
 | Archivo | Función |
 |---------|---------|
 | `app_lmstudio.py` | Interfaz Streamlit: modelo, indexación, multiselect de fuentes, Chat / Resumen / Cuestionario / Guía. |
+| `ingest.py` | Apartado A (enunciado práctica): indexa PDF/TXT de `./docs` en `./chroma_db` vía `chroma_lm`. |
 | `office_docs.py` | Carga de documentos, troceado, vectorización en Chroma; **`indexar_carpeta_en_sistema`** (compartido con `reindex.py`). |
 | `chroma_lm.py` | Cliente Chroma con `PersistentClient` y helpers para LangChain. |
 | `rag_chain_lm.py` | URL LM Studio, `DB_PATH`, lista de modelos, `crear_cadena_rag()`. |
@@ -61,7 +62,6 @@ La aplicación **no** envía tus PDF a un LLM en la nube para generar embeddings
 | `agent_lmstudio.py` / `agent.py` | Agente ReAct con herramienta RAG (`rag_chain_lm` vs `rag_chain`). |
 | `api_service_lmstudio.py` / `api_service.py` | API REST FastAPI (variante LM Studio vs legada). |
 | `app_dashboard.py` | Streamlit antiguo sin modos NotebookLM. |
-| `ingesta.py` | Ingesta básica PDF/TXT; predecesor de `office_docs.py`. |
 | `rag_chain.py` | Cadena RAG sin la configuración centralizada de `rag_chain_lm.py`. |
 
 ---
@@ -320,6 +320,7 @@ curl -s http://localhost:1234/v1/models | python3 -m json.tool
 
 | Archivo | Rol |
 |---------|-----|
+| `ingest.py` | Indexación mínima PDF/TXT (práctica curso); `./docs` → `./chroma_db`. |
 | `app_lmstudio.py` | UI Streamlit, indexación, multiselect de fuentes, llamadas a modos. |
 | `rag_modes_lm.py` | Recuperación, filtro por `source`, invocación al LLM. |
 | `office_docs.py` | Carga de ficheros, split, persistencia Chroma; **`indexar_carpeta_en_sistema`** (UI y `reindex.py`). |

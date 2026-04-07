@@ -2,7 +2,7 @@
 
 ## Overview
 
-Este documento describe el diseño técnico de un sistema de pruebas completo para validar un proyecto RAG (Retrieval-Augmented Generation) que utiliza LangChain, ChromaDB y LM Studio. El **producto bajo prueba** ha evolucionado: la interfaz principal es **`app_lmstudio.py`** (Streamlit con pestañas, indexación de carpeta de oficina, memoria conversacional, modos tipo NotebookLM, **cuestionario interactivo** con opciones A–D y comprobación de respuestas, **persistencia en `st.session_state`** de último resumen/cuestionario/guía con acciones **Guardar** e **Imprimir**, **multiselect de documentos indexados** para acotar el contexto RAG, y panel lateral LM Studio con **embed opcional** vía `LM_STUDIO_EMBED_URL` y arranque del escritorio con **`LM_STUDIO_EXECUTABLE`**). Está apoyada en **`office_docs.py`** (incluye **`indexar_carpeta_en_sistema`** compartido con la CLI), **`chroma_lm.py`** (`PersistentClient` sobre `./chroma_db`), **`rag_chain_lm.py`**, **`prompts_notebooklm.py`** y **`rag_modes_lm.py`** (en modo cuestionario, el contexto de recuperación incluye **ruta de archivo por fragmento** para trazabilidad). La CLI **`reindex.py`** permite reindexar desde cron o tras sincronizar una carpeta de la nube a disco (sin Streamlit ni LM Studio). Siguen existiendo módulos legados (`app_dashboard.py`, `rag_chain.py`, `ingesta.py`) que pueden mantenerse en el alcance de pruebas si siguen en uso. El sistema de pruebas proporcionará cobertura de los componentes críticos mediante pruebas unitarias, de integración y basadas en propiedades.
+Este documento describe el diseño técnico de un sistema de pruebas completo para validar un proyecto RAG (Retrieval-Augmented Generation) que utiliza LangChain, ChromaDB y LM Studio. El **producto bajo prueba** ha evolucionado: la interfaz principal es **`app_lmstudio.py`** (Streamlit con pestañas, indexación de carpeta de oficina, memoria conversacional, modos tipo NotebookLM, **cuestionario interactivo** con opciones A–D y comprobación de respuestas, **persistencia en `st.session_state`** de último resumen/cuestionario/guía con acciones **Guardar** e **Imprimir**, **multiselect de documentos indexados** para acotar el contexto RAG, y panel lateral LM Studio con **embed opcional** vía `LM_STUDIO_EMBED_URL` y arranque del escritorio con **`LM_STUDIO_EXECUTABLE`**). Está apoyada en **`office_docs.py`** (incluye **`indexar_carpeta_en_sistema`** compartido con la CLI), **`chroma_lm.py`** (`PersistentClient` sobre `./chroma_db`), **`rag_chain_lm.py`**, **`prompts_notebooklm.py`** y **`rag_modes_lm.py`** (en modo cuestionario, el contexto de recuperación incluye **ruta de archivo por fragmento** para trazabilidad). La CLI **`reindex.py`** permite reindexar desde cron o tras sincronizar una carpeta de la nube a disco (sin Streamlit ni LM Studio). Siguen existiendo módulos legados (`app_dashboard.py`, `rag_chain.py`, `ingest.py`) que pueden mantenerse en el alcance de pruebas si siguen en uso. El sistema de pruebas proporcionará cobertura de los componentes críticos mediante pruebas unitarias, de integración y basadas en propiedades.
 
 **Documentación del producto (presentación y manuales):** [README.md](../../../README.md) (entrada al repositorio), [docs/MANUAL_USUARIO.md](../../../docs/MANUAL_USUARIO.md), [docs/MANUAL_DESARROLLO.md](../../../docs/MANUAL_DESARROLLO.md), [docs/CASOS_DE_USO.md](../../../docs/CASOS_DE_USO.md), [docs/DIAGRAMAS_UML_MERMAID.md](../../../docs/DIAGRAMAS_UML_MERMAID.md). Los **requisitos funcionales** resumidos (RF-01–RF-14) están en [requirements.md](./requirements.md#documentación-de-requisitos-funcionales-del-producto).
 
@@ -20,7 +20,7 @@ El sistema de pruebas cubrirá (prioridad actual):
 - **Carga e indexación de documentación de oficina** (`office_docs.py`): carpetas `./docs` o rutas absolutas, recursivo, formatos PDF/TXT/MD/DOCX, vectorización con reemplazo total o fusión incremental; **`reindex.py`** reutiliza `indexar_carpeta_en_sistema` para ingesta programada (cron, post-rclone)
 - **Cadena RAG LM Studio** (`rag_chain_lm.py`) y ejecución multimodo (`rag_modes_lm.py`, `prompts_notebooklm.py`)
 - **Interfaz Streamlit** (`app_lmstudio.py`): chat con memoria; resumen, cuestionario JSON **con UI interactiva** (opciones, comprobación, explicación y referencia a fragmento/fuente), guía de estudio; **filtrado por documentos**; selector de modelo; panel LM Studio (embed/escritorio); botones de indexación; **guardar/imprimir** salidas generadas
-- Módulo de ingesta clásico (`ingesta.py`) y cadena legada (`rag_chain.py`) si permanecen en el proyecto
+- Módulo de ingesta clásico (`ingest.py`) y cadena legada (`rag_chain.py`) si permanecen en el proyecto
 - Herramientas y agente (`agent.py` / `agent_lmstudio.py`)
 - API REST (`api_service.py` / `api_service_lmstudio.py`)
 - Dashboard legado (`app_dashboard.py`) si aplica
@@ -34,7 +34,7 @@ El sistema de pruebas cubrirá (prioridad actual):
 ```
 tests/
 ├── conftest.py                 # Fixtures compartidas y configuración pytest
-├── test_ingesta.py            # Pruebas del módulo de ingesta
+├── test_ingest.py            # Pruebas del módulo de ingesta
 ├── test_rag_chain.py          # Pruebas de la cadena RAG
 ├── test_agent.py              # Pruebas del agente y herramientas
 ├── test_api.py                # Pruebas del servicio API REST
@@ -72,7 +72,7 @@ graph TB
     end
     
     subgraph "Unit Tests"
-        UT1[test_ingesta.py]
+        UT1[test_ingest.py]
         UT2[test_rag_chain.py]
         UT2b[test_rag_chain_lm.py]
         UT3[test_agent.py]
@@ -89,7 +89,7 @@ graph TB
     end
     
     subgraph "RAG System Under Test"
-        Ingesta[ingesta.py]
+        Ingesta[ingest.py]
         Office[office_docs.py]
         RAG[rag_chain.py]
         RAGlm[rag_chain_lm.py]
@@ -239,7 +239,7 @@ class MockLMStudioServer:
 - Puede simular errores de conexión y timeouts
 - Registra todas las solicitudes para verificación
 
-### 3. Módulo de Pruebas de Ingesta (test_ingesta.py)
+### 3. Módulo de Pruebas de Ingesta (test_ingest.py)
 
 **Responsabilidad**: Validar el módulo de ingesta de documentos.
 
@@ -821,7 +821,7 @@ Esta combinación proporciona:
 
 #### Unit Tests
 
-**test_ingesta.py**:
+**test_ingest.py**:
 - Carga de documentos PDF y TXT
 - Chunking con parámetros correctos
 - Generación y almacenamiento de embeddings
@@ -1077,7 +1077,7 @@ pytest tests/ --cov --cov-report=html --cov-report=term-missing
 
 **Tests específicos**:
 ```bash
-pytest tests/test_ingesta.py::test_load_pdf_document
+pytest tests/test_ingest.py::test_load_pdf_document
 ```
 
 **Verbose output**:

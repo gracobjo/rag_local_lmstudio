@@ -33,7 +33,7 @@ Resumen en español del comportamiento esperado de la aplicación (para manuales
 
 - **RAG_System**: Sistema completo de Retrieval-Augmented Generation que incluye ingesta, recuperación y generación de respuestas
 - **Test_Suite**: Conjunto de pruebas automatizadas para validar el sistema RAG
-- **Ingestion_Module**: Componente que carga y procesa documentos (ingesta.py)
+- **Ingestion_Module**: Componente que carga y procesa documentos (`ingest.py`, `office_docs.py`)
 - **RAG_Chain**: Cadena de recuperación y generación de respuestas (rag_chain.py)
 - **CLI_Interface**: Interfaz de línea de comandos del agente (agent.py)
 - **API_Service**: Servicio REST API (api_service.py)
@@ -187,7 +187,7 @@ Resumen en español del comportamiento esperado de la aplicación (para manuales
 #### Acceptance Criteria
 
 1. THE Test_Suite SHALL use pytest as the testing framework
-2. THE Test_Suite SHALL organize tests in separate modules by component (e.g. `test_ingesta.py`, `test_rag_chain.py`, `test_rag_chain_lm.py`, `test_office_docs.py`, `test_rag_modes_lm.py`, `test_app_lmstudio.py`, `test_agent.py`, `test_api.py`)
+2. THE Test_Suite SHALL organize tests in separate modules by component (e.g. `test_ingest.py`, `test_rag_chain.py`, `test_rag_chain_lm.py`, `test_office_docs.py`, `test_rag_modes_lm.py`, `test_app_lmstudio.py`, `test_agent.py`, `test_api.py`)
 3. THE Test_Suite SHALL provide fixtures for common test setup (test documents, mock LM Studio, temporary ChromaDB)
 4. THE Test_Suite SHALL generate coverage reports showing at least 80% code coverage
 5. THE Test_Suite SHALL include integration tests that verify end-to-end workflows
