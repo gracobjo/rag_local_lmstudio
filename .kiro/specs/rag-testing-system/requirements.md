@@ -4,6 +4,31 @@
 
 Este documento define los requisitos para un sistema de pruebas completo que verifique la funcionalidad del proyecto RAG (Retrieval-Augmented Generation) local. El sistema RAG utiliza LangChain, ChromaDB y LM Studio para proporcionar interfaces: CLI (`agent.py` / `agent_lmstudio.py`), API REST (`api_service.py` / `api_service_lmstudio.py`) y aplicación Streamlit principal **`app_lmstudio.py`** (sustituye o complementa el dashboard legado `app_dashboard.py`). El sistema de pruebas debe validar todos los componentes críticos, incluyendo ingesta de documentos (incl. **carpeta de oficina** vía `office_docs.py`), recuperación de información, **modos de contenido tipo NotebookLM** (`prompts_notebooklm.py`, `rag_modes_lm.py`), **cuestionario interactivo** y **filtrado por documentos**, **memoria conversacional** en el chat, funcionamiento de interfaces, integración con LM Studio (incl. **ids de modelo** alineados con `GET /v1/models`) y manejo de errores.
 
+La **documentación de usuario**, **casos de uso** (`docs/CASOS_DE_USO.md`) y el **[README](../../../README.md)** de presentación en la raíz del repositorio deben mantenerse coherentes con los requisitos funcionales siguientes y con los criterios de aceptación de las secciones **Requirement 11** y **Requirement 12**.
+
+## Documentación de requisitos funcionales del producto
+
+Resumen en español del comportamiento esperado de la aplicación (para manuales, diagramas y presentación). Los **criterios formales de la Test_Suite** siguen en las secciones *Requirement 1–13* más abajo.
+
+| ID | Requisito funcional | Descripción breve |
+|----|----------------------|-------------------|
+| **RF-01** | Ingesta multi-formato | Cargar PDF, TXT, Markdown y DOCX; troceado configurable; embeddings locales (`all-MiniLM-L6-v2`); persistencia en Chroma (`./chroma_db`). |
+| **RF-02** | Indexación por carpeta o fusión | Indexar `./docs` o ruta absoluta con **reemplazo** del índice como fuente única; subidas a `./docs` con **fusión** incremental al índice existente. |
+| **RF-03** | Chat RAG con memoria | Recuperación de fragmentos relevantes; prompt con historial de turnos para seguimientos; hechos acotados al contexto recuperado. |
+| **RF-04** | Filtro por documentos | Multiselect de rutas (`source`) para limitar resumen, cuestionario, guía y chat a archivos seleccionados (vacío = todo el índice). |
+| **RF-05** | Resumen estructurado | Modo resumen con enfoque opcional; salida Markdown; Guardar / Imprimir; persistencia del último resultado en sesión. |
+| **RF-06** | Cuestionario JSON + UI interactiva | Generación JSON según `prompts_notebooklm`; parseo tolerante; UI con A–D, Comprobar, feedback y campos de trazabilidad (`fuente_archivo`, `numero_fragmento`, `donde_encontrarlo`). |
+| **RF-07** | Guía de estudio | Modo guía con ángulo opcional; Markdown; Guardar / Imprimir. |
+| **RF-08** | Contexto cuestionario con rutas | En modo cuestionario, el contexto enviado al LLM incluye la ruta de archivo por fragmento para favorecer citas correctas en el JSON. |
+| **RF-09** | Contrato LM Studio | URL base (`LM_STUDIO_BASE_URL`), `id` de modelo alineado con `GET /v1/models`; mensajes claros si el modelo no está cargado o el `id` es inválido. |
+| **RF-10** | Panel LM Studio opcional | Abrir app de escritorio (`LM_STUDIO_EXECUTABLE` / PATH); iframe opcional (`LM_STUDIO_EMBED_URL`, `LM_STUDIO_EMBED_HEIGHT`). |
+| **RF-11** | Reindexación CLI | `reindex.py` reutiliza `indexar_carpeta_en_sistema`; opciones `--path`, `--merge`, `--db`, `--no-recursive`; sin LM Studio para la ingesta. |
+| **RF-12** | Operación nube → disco | Documentación de flujos con sync (p. ej. `rclone`) + `reindex` periódico o manual. |
+| **RF-13** | Chroma estable | Uso de `chromadb.PersistentClient` vía `chroma_lm.py` para abrir `./chroma_db` de forma coherente entre versiones. |
+| **RF-14** | Gestión de sesión UI | Borrar historial de chat sin borrar índice; borrar índice desde la UI con efecto en `chroma_db` y selección de fuentes. |
+
+**Trazabilidad:** los casos de uso textuales **CU-01–CU-12** en `docs/CASOS_DE_USO.md` cubren estos requisitos desde la perspectiva del usuario.
+
 ## Glossary
 
 - **RAG_System**: Sistema completo de Retrieval-Augmented Generation que incluye ingesta, recuperación y generación de respuestas

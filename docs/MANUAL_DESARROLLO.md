@@ -1,6 +1,18 @@
 # Manual de desarrollo — RAG local con LM Studio
 
-Este documento describe cómo **configurar el entorno**, **levantar LM Studio**, **exponer la API local**, **arrancar la aplicación Streamlit** y **alinear los identificadores de modelo** con el código. Complementa el [manual de usuario](./MANUAL_USUARIO.md) y los [diagramas técnicos](./DIAGRAMAS_UML_MERMAID.md).
+Este documento describe cómo **configurar el entorno**, **levantar LM Studio**, **exponer la API local**, **arrancar la aplicación Streamlit** y **alinear los identificadores de modelo** con el código.
+
+**Mapa documental**
+
+| Documento | Uso |
+|-----------|-----|
+| [README.md](../README.md) | Presentación del proyecto, instalación rápida, enlaces. |
+| [MANUAL_USUARIO.md](./MANUAL_USUARIO.md) | Guía para usuarios finales de la app Streamlit. |
+| [CASOS_DE_USO.md](./CASOS_DE_USO.md) | Casos de uso CU-01–CU-12 y trazabilidad con requisitos RF. |
+| [DIAGRAMAS_UML_MERMAID.md](./DIAGRAMAS_UML_MERMAID.md) | Arquitectura y diagramas Mermaid. |
+| [.kiro/specs/rag-testing-system/requirements.md](../.kiro/specs/rag-testing-system/requirements.md) | Requisitos de pruebas + tabla RF (producto). |
+| [.kiro/specs/rag-testing-system/design.md](../.kiro/specs/rag-testing-system/design.md) | Diseño del sistema de pruebas y módulos del producto. |
+| [docs/README.md](./README.md) | Índice de la carpeta `docs/`. |
 
 ---
 
@@ -322,8 +334,11 @@ curl -s http://localhost:1234/v1/models | python3 -m json.tool
 
 ## 14. Referencias
 
+- [README de presentación](../README.md) — primera lectura al clonar el repositorio.
 - [Manual de usuario](./MANUAL_USUARIO.md) — uso final de la aplicación.
+- [Casos de uso](./CASOS_DE_USO.md) — flujos por actor.
 - [Diagramas UML (Mermaid)](./DIAGRAMAS_UML_MERMAID.md) — arquitectura y flujos.
+- [Requisitos (producto + tests)](../.kiro/specs/rag-testing-system/requirements.md) — RF-01–RF-14 y criterios de aceptación.
 
 ---
 

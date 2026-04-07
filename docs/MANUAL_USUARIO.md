@@ -4,8 +4,12 @@ Aplicación web (**Streamlit**) que permite consultar documentación propia medi
 
 **Documentación relacionada**
 
+- **Presentación e instalación rápida:** [README.md](../README.md) en la raíz del repositorio.
+- **Casos de uso (actores y flujos):** [CASOS_DE_USO.md](./CASOS_DE_USO.md).
+- **Requisitos funcionales (tabla RF):** [.kiro/specs/rag-testing-system/requirements.md](../.kiro/specs/rag-testing-system/requirements.md) (sección *Documentación de requisitos funcionales del producto*).
 - Diagramas técnicos (componentes, despliegue, secuencias): [DIAGRAMAS_UML_MERMAID.md](./DIAGRAMAS_UML_MERMAID.md).
 - Instalación del entorno, LM Studio, API y arranque para desarrollo: [MANUAL_DESARROLLO.md](./MANUAL_DESARROLLO.md) (incluye **estructura del repo**, módulos `.py`, y **reindexación** desde cron / carpeta sincronizada con `reindex.py`).
+- Índice de la carpeta `docs/`: [docs/README.md](./README.md).
 
 ---
 
@@ -148,6 +152,7 @@ Vacía la conversación de la pestaña Chat (no borra el índice ni los document
 | `office_docs.py` | Carga de archivos, troceado y escritura en Chroma. |
 | `rag_modes_lm.py` | Recuperación por modo, filtro por fuentes, llamada al LLM. |
 | `prompts_notebooklm.py` | Prompts y parámetros (temperatura, cantidad de fragmentos) por modo. |
+| `chroma_lm.py` | Cliente Chroma persistente y embeddings compartidos con LangChain. |
 | `rag_chain_lm.py` | Configuración por defecto de URL/modelo LM Studio y cadena RAG clásica (referencia). |
 | `./docs/` | Carpeta de trabajo para copias de documentos subidos y manuales del proyecto. |
 | `./chroma_db/` | Índice vectorial persistente (puede borrarse con el botón correspondiente). |

@@ -2,7 +2,7 @@
 
 Este documento recoge vistas **componentes**, **despliegue**, **secuencia**, **clases** y **estados** del sistema descrito en el código (`app_lmstudio.py`, `office_docs.py`, `chroma_lm.py`, `rag_chain_lm.py`, `rag_modes_lm.py`, `prompts_notebooklm.py`, `reindex.py`). Incluye el flujo de **cuestionario interactivo** (JSON → opciones A–D → comprobación) y el **filtrado por documentos** en el sidebar.
 
-Para **uso de la aplicación**, véase el [manual de usuario](./MANUAL_USUARIO.md). Para **configuración del entorno**, LM Studio, servidor y arranque de Streamlit, el [manual de desarrollo](./MANUAL_DESARROLLO.md).
+Para **uso de la aplicación**, véase el [manual de usuario](./MANUAL_USUARIO.md). Para **configuración del entorno**, LM Studio, servidor y arranque de Streamlit, el [manual de desarrollo](./MANUAL_DESARROLLO.md). Para **casos de uso textuales** (CU-01–CU-12), [CASOS_DE_USO.md](./CASOS_DE_USO.md). Para **presentación del proyecto**, [README.md](../README.md). **Requisitos funcionales (RF-01–RF-14):** [.kiro/specs/rag-testing-system/requirements.md](../.kiro/specs/rag-testing-system/requirements.md).
 
 ---
 
@@ -273,31 +273,74 @@ stateDiagram-v2
 
 ## 7. Diagrama de casos de uso (resumen)
 
+Vista alineada con [CASOS_DE_USO.md](./CASOS_DE_USO.md) (identificadores **CU-xx**).
+
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph Actores
-        U1[Usuario / Oficina]
-        U2[Administrador]
+        U[Usuario]
+        ADM[Administrador / operador]
     end
 
-    subgraph Uso
-        UC1[Consultar documentos\nchat RAG]
-        UC2[Indexar carpeta\nfuente única]
-        UC3[Subir archivos\na docs/]
-        UC4[Generar resumen]
-        UC5[Generar cuestionario]
-        UC6[Generar guía de estudio]
-        UC7[Elegir modelo LM Studio]
+    subgraph Consulta_y_generación
+        UC1[CU-01 Chat RAG\ncon memoria]
+        UC4[CU-04 Filtrar por\ndocumentos]
+        UC5[CU-05 Resumen]
+        UC6[CU-06 Cuestionario\ninteractivo]
+        UC7[CU-07 Guía de estudio]
+        UC8[CU-08 Elegir modelo /\nerrores LM Studio]
+        UC9[CU-09 Panel LM Studio\nopcional]
+        UC10[CU-10 Guardar /\nimprimir]
     end
 
-    U1 --> UC1
-    U1 --> UC3
-    U1 --> UC4
-    U1 --> UC5
-    U1 --> UC6
-    U1 --> UC7
-    U2 --> UC2
+    subgraph Indexación
+        UC2[CU-02 Indexar carpeta]
+        UC3[CU-03 Subir y fusionar]
+        UC11a[CU-11 Borrar índice /\nhistorial]
+    end
+
+    subgraph Automatización
+        UC12[CU-12 reindex.py\ncron / post-sync]
+    end
+
+    U --> UC1
+    U --> UC4
+    U --> UC5
+    U --> UC6
+    U --> UC7
+    U --> UC8
+    U --> UC9
+    U --> UC10
+    U --> UC3
+    U --> UC11a
+    ADM --> UC2
+    ADM --> UC12
+    UC4 -.->|restringe contexto| UC1
+    UC4 -.->|restringe contexto| UC5
+    UC4 -.->|restringe contexto| UC6
+    UC4 -.->|restringe contexto| UC7
 ```
+
+---
+
+## 8. Matriz RF ↔ vista de casos de uso
+
+Referencia cruzada entre la tabla **RF-01–RF-14** en [requirements.md](../.kiro/specs/rag-testing-system/requirements.md) y los **CU-xx** (mismo significado que en [CASOS_DE_USO.md](./CASOS_DE_USO.md)).
+
+| RF | Tema | Casos de uso relacionados |
+|----|------|---------------------------|
+| RF-01 | Ingesta multi-formato | CU-02, CU-03 |
+| RF-02 | Carpeta / fusión | CU-02, CU-03 |
+| RF-03 | Chat RAG | CU-01 |
+| RF-04 | Filtro documentos | CU-04 |
+| RF-05 | Resumen | CU-05, CU-10 |
+| RF-06 / RF-08 | Cuestionario + contexto con rutas | CU-06, CU-10 |
+| RF-07 | Guía | CU-07, CU-10 |
+| RF-09 | Contrato LM Studio | CU-08 |
+| RF-10 | Panel LM Studio | CU-09 |
+| RF-11 / RF-12 | CLI reindex / nube→disco | CU-12 |
+| RF-13 | Chroma estable | CU-02, CU-03, CU-12 (implícito) |
+| RF-14 | Sesión / borrado | CU-11 |
 
 ---
 

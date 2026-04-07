@@ -22,6 +22,12 @@ Este plan descompone la implementación del sistema de pruebas RAG en tareas eje
   - [x] 0.5.6 `chroma_lm.py` con `PersistentClient`; documentación de diagramas alineada con flujos actuales
   - _Requirements: 11.6–11.10, 12.4_
 
+- [x] 0.6 Presentación, requisitos funcionales y casos de uso (documentación)
+  - [x] 0.6.1 `README.md` en raíz; `docs/CASOS_DE_USO.md`; `docs/README.md` (índice)
+  - [x] 0.6.2 Tabla RF-01–RF-14 y enlaces en `requirements.md`; manuales usuario/desarrollo actualizados
+  - [x] 0.6.3 Diagramas Mermaid: casos de uso ampliados + matriz RF ↔ CU en `DIAGRAMAS_UML_MERMAID.md`
+  - _Requirements: documentación alineada con Req. 11–12 y RF_
+
 - [ ] 1. Configurar infraestructura de testing
   - [ ] 1.1 Crear estructura de directorios y archivos base
     - Crear directorio `tests/` con subdirectorios `fixtures/`, `mocks/`, `utils/`
